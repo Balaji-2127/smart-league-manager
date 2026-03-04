@@ -13,6 +13,7 @@ const cors = require('cors')
 const morgan = require('morgan')
 const env = require('./config/env')
 const routes = require('./routes')
+const logger = require('./utils/logger')
 
 const app = express()
 
@@ -35,9 +36,8 @@ app.use(cors({
 }))
 
 // ─── Request logging ──────────────────────────────────────────────────────────
-// 'dev'  → concise coloured output in development
-// 'combined' → Apache-style log in production
-app.use(morgan(env.isDev ? 'dev' : 'combined'))
+// Stream all HTTP logs through Winston so they end up in the log files too
+app.use(morgan(env.isDev ? 'dev' : 'combined', { stream: logger.stream }))
 
 // ─── Body parsing ─────────────────────────────────────────────────────────────
 app.use(express.json({ limit: '10mb' }))
@@ -46,10 +46,10 @@ app.use(express.urlencoded({ extended: true }))
 // ─── API routes ───────────────────────────────────────────────────────────────
 app.use('/api', routes)
 
-// ─── 404 catch-all ────────────────────────────────────────────────────────────
-app.use((req, res) => {
-    res.status(404).json({ status: 'error', message: `Route not found: ${req.method} ${req.path}` })
-})
+// ─── NOTE ─────────────────────────────────────────────────────────────────────
+// The 404 catch-all is intentionally NOT here.
+// It is registered in server.js AFTER Apollo mounts /graphql,
+// so GraphQL requests are not intercepted before Apollo can handle them.
 
 // ─── Global error handler ─────────────────────────────────────────────────────
 // eslint-disable-next-line no-unused-vars

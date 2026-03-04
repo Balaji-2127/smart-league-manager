@@ -1,6 +1,6 @@
 import { useEffect, useRef, useCallback } from 'react'
 
-const WS_URL = import.meta.env.VITE_WS_URL || 'ws://localhost:5000'
+const WS_URL = import.meta.env.VITE_WS_URL || 'ws://localhost:5000/ws'
 
 /**
  * useWebSocket – connects to the WS server and calls onMessage with parsed data.

@@ -1,0 +1,15 @@
+{
+    "keep": {
+        "days": true,
+        "amount": 14
+    },
+    "auditLog": "C:\\Users\\balaj\\Smart League Manager\\server\\logs\\.4651db1fe6ad7932c284a2801b0bf3198cc0a436-audit.json",
+    "files": [
+        {
+            "date": 1772616327088,
+            "name": "C:\\Users\\balaj\\Smart League Manager\\server\\logs\\app-2026-03-04.log",
+            "hash": "599c97de76fad99f38331927e1491ffabf0a9aa16259e1d7f56861fac434aa25"
+        }
+    ],
+    "hashType": "sha256"
+}

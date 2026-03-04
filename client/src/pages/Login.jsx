@@ -115,6 +115,7 @@ export default function Login() {
                                     <option value="viewer">Viewer</option>
                                     <option value="player">Player</option>
                                     <option value="captain">Team Captain</option>
+                                    <option value="admin">Admin</option>
                                 </select>
                             </div>
                         )}

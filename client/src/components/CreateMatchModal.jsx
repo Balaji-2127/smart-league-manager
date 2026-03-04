@@ -1,35 +1,46 @@
-import { useState, useEffect } from 'react'
-import api from '../api/axios'
+import { useState } from 'react'
+import { useQuery, useMutation, gql } from '@apollo/client'
 import toast from 'react-hot-toast'
 import { FiX } from 'react-icons/fi'
 
-/**
- * CreateMatchModal – Admin-only modal to schedule a new match.
- * Props: onClose(), onCreated(match)
- */
-export default function CreateMatchModal({ onClose, onCreated }) {
-    const [form, setForm] = useState({ tournament_id: '', team1_id: '', team2_id: '', scheduled_date: '' })
-    const [tournaments, setTournaments] = useState([])
-    const [teams, setTeams] = useState([])
-    const [loading, setLoading] = useState(false)
+const GET_LISTS = gql`
+  query GetLists {
+    tournaments { id name }
+    teams { id name }
+  }
+`
 
-    useEffect(() => {
-        api.get('/tournaments').then(r => setTournaments(r.data.tournaments || FALLBACK_TOURNAMENTS)).catch(() => setTournaments(FALLBACK_TOURNAMENTS))
-        api.get('/teams').then(r => setTeams(r.data.teams || FALLBACK_TEAMS)).catch(() => setTeams(FALLBACK_TEAMS))
-    }, [])
+const CREATE_MATCH = gql`
+  mutation CreateMatch($tournamentId: ID!, $team1Id: ID!, $team2Id: ID!, $date: String!) {
+    createMatch(tournament_id: $tournamentId, team1_id: $team1Id, team2_id: $team2Id, scheduled_date: $date) {
+      id
+      status
+    }
+  }
+`
+
+export default function CreateMatchModal({ onClose, onCreated }) {
+    const { data } = useQuery(GET_LISTS)
+    const [createMatch, { loading }] = useMutation(CREATE_MATCH)
+    const [form, setForm] = useState({ tournament_id: '', team1_id: '', team2_id: '', scheduled_date: '' })
 
     const handleSubmit = async (e) => {
         e.preventDefault()
         if (form.team1_id === form.team2_id) { toast.error('Teams must be different'); return }
-        setLoading(true)
         try {
-            const { data } = await api.post('/matches', form)
+            await createMatch({
+                variables: {
+                    tournamentId: form.tournament_id,
+                    team1Id: form.team1_id,
+                    team2Id: form.team2_id,
+                    date: form.scheduled_date
+                }
+            })
             toast.success('Match scheduled! 📅')
-            onCreated?.(data.match || { ...form, id: Date.now(), status: 'upcoming' })
+            onCreated?.()
+            onClose()
         } catch (err) {
-            toast.error(err.response?.data?.message || 'Failed to create match')
-        } finally {
-            setLoading(false)
+            toast.error(err.message || 'Failed to create match')
         }
     }
 
@@ -45,7 +56,7 @@ export default function CreateMatchModal({ onClose, onCreated }) {
                         <label>Tournament</label>
                         <select value={form.tournament_id} onChange={e => setForm(f => ({ ...f, tournament_id: e.target.value }))} required>
                             <option value="">Select tournament…</option>
-                            {tournaments.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+                            {data?.tournaments?.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
                         </select>
                     </div>
                     <div className="grid-2">
@@ -53,14 +64,14 @@ export default function CreateMatchModal({ onClose, onCreated }) {
                             <label>Team 1</label>
                             <select value={form.team1_id} onChange={e => setForm(f => ({ ...f, team1_id: e.target.value }))} required>
                                 <option value="">Select team…</option>
-                                {teams.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+                                {data?.teams?.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
                             </select>
                         </div>
                         <div className="form-group">
                             <label>Team 2</label>
                             <select value={form.team2_id} onChange={e => setForm(f => ({ ...f, team2_id: e.target.value }))} required>
                                 <option value="">Select team…</option>
-                                {teams.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+                                {data?.teams?.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
                             </select>
                         </div>
                     </div>
@@ -80,14 +91,3 @@ export default function CreateMatchModal({ onClose, onCreated }) {
         </div>
     )
 }
-
-const FALLBACK_TOURNAMENTS = [
-    { id: 1, name: 'IPL 2025' },
-    { id: 2, name: 'T20 World Cup 2025' },
-]
-const FALLBACK_TEAMS = [
-    { id: 1, name: 'Royal Challengers' },
-    { id: 2, name: 'Mumbai Titans' },
-    { id: 3, name: 'Delhi Destroyers' },
-    { id: 4, name: 'Chennai Lions' },
-]

@@ -1,23 +1,45 @@
 import { useEffect, useRef, useState } from 'react'
 import { gsap } from 'gsap'
 import { useAuth } from '../context/AuthContext'
-import api from '../api/axios'
+import { useQuery, useMutation, gql } from '@apollo/client'
 import toast from 'react-hot-toast'
 import { FiPlus } from 'react-icons/fi'
 import Skeleton from '../components/Skeleton'
 
+const GET_TOURNAMENTS = gql`
+  query GetTournaments {
+    tournaments {
+      id
+      name
+      year
+      status
+    }
+  }
+`
+
+const CREATE_TOURNAMENT = gql`
+  mutation CreateTournament($name: String!, $year: Int!) {
+    createTournament(name: $name, year: $year) {
+      id
+      name
+      year
+      status
+    }
+  }
+`
+
 export default function Tournaments() {
     const { user } = useAuth()
-    const [tournaments, setTournaments] = useState([])
-    const [loading, setLoading] = useState(true)
+    const { data, loading, error, refetch } = useQuery(GET_TOURNAMENTS)
+    const [createTournament] = useMutation(CREATE_TOURNAMENT)
+
     const [showForm, setShowForm] = useState(false)
-    const [form, setForm] = useState({ name: '', year: new Date().getFullYear(), status: 'upcoming' })
+    const [form, setForm] = useState({ name: '', year: new Date().getFullYear() })
     const listRef = useRef(null)
     const headerRef = useRef(null)
 
     useEffect(() => {
         gsap.fromTo(headerRef.current, { y: -20, opacity: 0 }, { y: 0, opacity: 1, duration: 0.5 })
-        fetchTournaments()
     }, [])
 
     useEffect(() => {
@@ -28,25 +50,27 @@ export default function Tournaments() {
         )
     }, [loading])
 
-    const fetchTournaments = () => {
-        api.get('/tournaments')
-            .then(res => setTournaments(res.data.tournaments || DUMMY_TOURNAMENTS))
-            .catch(() => setTournaments(DUMMY_TOURNAMENTS))
-            .finally(() => setLoading(false))
-    }
-
     const handleCreate = async (e) => {
         e.preventDefault()
         try {
-            const { data } = await api.post('/tournaments', form)
-            setTournaments(prev => [data.tournament, ...prev])
+            await createTournament({
+                variables: {
+                    name: form.name,
+                    year: parseInt(form.year)
+                }
+            })
             toast.success('Tournament created! 🏆')
             setShowForm(false)
-            setForm({ name: '', year: new Date().getFullYear(), status: 'upcoming' })
+            setForm({ name: '', year: new Date().getFullYear() })
+            refetch()
         } catch (err) {
-            toast.error(err.response?.data?.message || 'Failed to create tournament')
+            toast.error(err.message || 'Failed to create tournament')
         }
     }
+
+    if (error) return <div className="page-wrapper"><p className="text-red">Error: {error.message}</p></div>
+
+    const tournaments = data?.tournaments || []
 
     return (
         <div className="page-wrapper">
@@ -78,14 +102,6 @@ export default function Tournaments() {
                                 <input type="number" value={form.year}
                                     onChange={e => setForm(f => ({ ...f, year: e.target.value }))} required />
                             </div>
-                            <div className="form-group">
-                                <label>Status</label>
-                                <select value={form.status} onChange={e => setForm(f => ({ ...f, status: e.target.value }))}>
-                                    <option value="upcoming">Upcoming</option>
-                                    <option value="ongoing">Ongoing</option>
-                                    <option value="completed">Completed</option>
-                                </select>
-                            </div>
                         </div>
                         <button type="submit" className="btn btn-primary">Create Tournament</button>
                     </form>
@@ -103,13 +119,18 @@ export default function Tournaments() {
                                 </span>
                             </div>
                             <h3 style={{ marginBottom: '0.3rem' }}>{t.name}</h3>
-                            <p className="text-muted text-sm">{t.year} • {t.total_matches || '–'} matches</p>
+                            <p className="text-muted text-sm">{t.year}</p>
                             <div className="mt-2 flex gap-1">
                                 <a href="/matches" className="btn btn-ghost btn-sm">View Matches</a>
                                 <a href="/leaderboard" className="btn btn-ghost btn-sm">Standings</a>
                             </div>
                         </div>
                     ))}
+                    {tournaments.length === 0 && !loading && (
+                        <div className="card" style={{ gridColumn: '1 / -1', textAlign: 'center' }}>
+                            <p className="text-muted">No tournaments found.</p>
+                        </div>
+                    )}
                 </div>
             )}
 
@@ -117,10 +138,3 @@ export default function Tournaments() {
         </div>
     )
 }
-
-const DUMMY_TOURNAMENTS = [
-    { id: 1, name: 'IPL 2025', year: 2025, status: 'ongoing', total_matches: 74 },
-    { id: 2, name: 'T20 World Cup', year: 2025, status: 'upcoming', total_matches: 55 },
-    { id: 3, name: 'Ranji Trophy', year: 2024, status: 'completed', total_matches: 128 },
-    { id: 4, name: 'Vijay Hazare', year: 2024, status: 'completed', total_matches: 44 },
-]

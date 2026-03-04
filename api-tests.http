@@ -1,0 +1,502 @@
+### Smart League Manager – REST & GraphQL API Tests
+### Install "REST Client" extension in VS Code, then click "Send Request" above each block.
+### ─────────────────────────────────────────────────────────────────────────────────────
+
+@baseUrl = http://localhost:5000
+@contentType = application/json
+
+### ─── Save your token after login ────────────────────────────────────────────
+### After running the Login request, copy the token value and paste it below:
+@token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6OSwibmFtZSI6IkFkbWluIFVzZXIiLCJlbWFpbCI6ImFkbWlAc2xtLmNvbSIsInJvbGUiOiJhZG1pbiIsImlhdCI6MTc3MjYxMTYxOCwiZXhwIjoxNzczMjE2NDE4fQ.VRElPOViSuBB82XEk3GOKcOl8IB-OOLCZcVPZU4n0QM
+
+
+###############################################################################
+# 1. HEALTH CHECK
+###############################################################################
+
+### Check server is running
+GET {{baseUrl}}/api/health
+
+
+###############################################################################
+# 2. AUTH (REST)
+###############################################################################
+
+### Register a new Admin user
+POST {{baseUrl}}/api/auth/register
+Content-Type: {{contentType}}
+
+{
+  "name": "Admin User",
+  "email": "admi@slm.com",
+  "password": "password123",
+  "role": "admin"
+}
+
+###
+
+### Register a Captain
+POST {{baseUrl}}/api/auth/register
+Content-Type: {{contentType}}
+
+{
+  "name": "Team Captain",
+  "email": "captain@slm.com",
+  "password": "password123",
+  "role": "captain"
+}
+
+###
+
+### Register a Player
+POST {{baseUrl}}/api/auth/register
+Content-Type: {{contentType}}
+
+{
+  "name": "John Doe",
+  "email": "player@slm.com",
+  "password": "password123",
+  "role": "player"
+}
+
+###
+
+### Register a Viewer
+POST {{baseUrl}}/api/auth/register
+Content-Type: {{contentType}}
+
+{
+  "name": "Cricket Fan",
+  "email": "viewer@slm.com",
+  "password": "password123",
+  "role": "viewer"
+}
+
+###
+
+### Login as Admin (copy the token from the response!)
+POST {{baseUrl}}/api/auth/login
+Content-Type: {{contentType}}
+
+{
+  "email": "balajid2206@gmail.com",
+  "password": "Balaji2206@"
+}
+
+###
+
+### Login as Captain
+POST {{baseUrl}}/api/auth/login
+Content-Type: {{contentType}}
+
+{
+  "email": "captain@slm.com",
+  "password": "password123"
+}
+
+
+###############################################################################
+# 3. GRAPHQL – QUERIES (GET DATA)
+###############################################################################
+
+### Get current logged-in user (me)
+POST {{baseUrl}}/graphql
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "query": "query { me { id name email role } }"
+}
+
+###
+
+### Get all users
+POST {{baseUrl}}/graphql
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "query": "query { users { id name email role } }"
+}
+
+###
+
+### Get all teams (with players)
+POST {{baseUrl}}/graphql
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "query": "query { teams { id name captain { name email } players { id runs wickets } } }"
+}
+
+###
+
+### Get a single team by ID
+POST {{baseUrl}}/graphql
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "query": "query { team(id: \"1\") { id name captain { name } players { id user { name } runs wickets } } }"
+}
+
+###
+
+### Get all players
+POST {{baseUrl}}/graphql
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "query": "query { players { id runs wickets matches_played user { name email } team { name } } }"
+}
+
+###
+
+### Get all tournaments
+POST {{baseUrl}}/graphql
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "query": "query { tournaments { id name year status } }"
+}
+
+###
+
+### Get all matches (with scores)
+POST {{baseUrl}}/graphql
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "query": "query { matches { id status scheduled_date tournament { name } team1 { name } team2 { name } score1 { runs wickets overs } score2 { runs wickets overs } } }"
+}
+
+###
+
+### Get live matches only
+POST {{baseUrl}}/graphql
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "query": "query { matches(status: \"live\") { id status team1 { name } team2 { name } score1 { runs wickets } score2 { runs wickets } } }"
+}
+
+###
+
+### Get a single match by ID
+POST {{baseUrl}}/graphql
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "query": "query { match(id: \"1\") { id status team1 { name } team2 { name } score1 { runs wickets overs } score2 { runs wickets overs } } }"
+}
+
+###
+
+### Get leaderboard (top batsmen, bowlers, team stats)
+POST {{baseUrl}}/graphql
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "query": "query { leaderboard { top_batsmen { runs user { name } team { name } } top_bowlers { wickets user { name } team { name } } points_table { team { name } played won lost points } } }"
+}
+
+
+###############################################################################
+# 4. GRAPHQL – MUTATIONS (CREATE / UPDATE DATA)
+###############################################################################
+
+### Create a new Tournament (Admin only)
+POST {{baseUrl}}/graphql
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "query": "mutation { createTournament(name: \"IPL 2025\", year: 2025) { id name year status } }"
+}
+
+###
+
+### Create a Team (Admin or Captain)
+POST {{baseUrl}}/graphql
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "query": "mutation { createTeam(name: \"Royal Challengers\", captain_id: \"1\") { id name captain { name } } }"
+}
+
+###
+
+### Add a player to a team
+POST {{baseUrl}}/graphql
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "query": "mutation { addPlayerToTeam(team_id: \"1\", user_id: \"3\", role: \"batsman\") { id user { name } team { name } } }"
+}
+
+###
+
+### Schedule a Match (Admin only)
+POST {{baseUrl}}/graphql
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "query": "mutation { createMatch(tournament_id: \"1\", team1_id: \"1\", team2_id: \"2\", scheduled_date: \"2025-04-15T14:00:00\") { id status scheduled_date team1 { name } team2 { name } } }"
+}
+
+###
+
+### Update match status (Admin only)
+POST {{baseUrl}}/graphql
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "query": "mutation { updateMatchStatus(id: \"1\", status: \"live\") { id status } }"
+}
+
+###
+
+### Update score and broadcast via WebSocket (Admin only)
+POST {{baseUrl}}/graphql
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "query": "mutation { updateScore(match_id: \"1\", team_id: \"1\", runs: 156, wickets: 4, overs: 18.3, extras: 12) { id runs wickets overs } }"
+}
+
+###
+
+### Update tournament status (Admin only)
+POST {{baseUrl}}/graphql
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "query": "mutation { updateTournamentStatus(id: \"1\", status: \"ongoing\") { id name status } }"
+}
+
+
+###############################################################################
+# 5. WEBSOCKET TEST NOTE
+###############################################################################
+# WebSocket testing requires a WS client tool.
+# Connect to: ws://localhost:5000/ws
+# After connecting, when you run "updateScore" mutation above,
+# you should see this broadcast message arrive in real-time:
+#
+# {
+#   "type": "SCORE_UPDATE",
+#   "match_id": "1",
+#   "score": { ... }
+# }
+#
+# Or run: node test-ws.js  (from the /server folder)
+
+
+###############################################################################
+# 6. REST – TEAMS (JWT Protected)
+###############################################################################
+
+### Get all teams
+GET {{baseUrl}}/api/teams
+Authorization: Bearer {{token}}
+
+###
+
+### Get a single team (replace 1 with actual ID)
+GET {{baseUrl}}/api/teams/1
+Authorization: Bearer {{token}}
+
+###
+
+### Create a team (Admin or Captain only)
+POST {{baseUrl}}/api/teams
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "name": "Royal Challengers Bangalore",
+  "logo_url": ""
+}
+
+###
+
+### Add a player to team (replace team ID and user_id with real IDs)
+POST {{baseUrl}}/api/teams/1/players
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "user_id": 3,
+  "role": "batsman"
+}
+
+
+###############################################################################
+# 7. REST – TOURNAMENTS (JWT Protected)
+###############################################################################
+
+### Get all tournaments
+GET {{baseUrl}}/api/tournaments
+Authorization: Bearer {{token}}
+
+###
+
+### Get tournaments filtered by status
+GET {{baseUrl}}/api/tournaments?status=upcoming
+Authorization: Bearer {{token}}
+
+###
+
+### Get single tournament
+GET {{baseUrl}}/api/tournaments/1
+Authorization: Bearer {{token}}
+
+###
+
+### Create a tournament (Admin only)
+POST {{baseUrl}}/api/tournaments
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "name": "IPL 2025",
+  "year": 2025
+}
+
+###
+
+### Update tournament status (Admin only)
+PUT {{baseUrl}}/api/tournaments/1
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "status": "ongoing"
+}
+
+
+###############################################################################
+# 8. REST – MATCHES (JWT Protected)
+###############################################################################
+
+### Get all matches (paginated)
+GET {{baseUrl}}/api/matches?page=1&limit=10
+Authorization: Bearer {{token}}
+
+###
+
+### Get live matches only
+GET {{baseUrl}}/api/matches?status=live
+Authorization: Bearer {{token}}
+
+###
+
+### Get single match with scores
+GET {{baseUrl}}/api/matches/1
+Authorization: Bearer {{token}}
+
+###
+
+### Create a match (Admin only)
+POST {{baseUrl}}/api/matches
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "tournament_id": 1,
+  "team1_id": 1,
+  "team2_id": 2,
+  "scheduled_date": "2025-04-15T14:00:00"
+}
+
+###
+
+### Update match status to live (Admin only)
+PUT {{baseUrl}}/api/matches/1
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "status": "live"
+}
+
+###
+
+### ⭐ Update score + WebSocket broadcast (Admin only)
+### Run node test-ws.js first in /server to see the live message!
+PUT {{baseUrl}}/api/matches/1/score
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "team_id": 1,
+  "runs": 156,
+  "wickets": 4,
+  "overs": 18.3,
+  "extras": 12
+}
+
+
+###############################################################################
+# 9. REST – PLAYERS (JWT Protected)
+###############################################################################
+
+### Get all players
+GET {{baseUrl}}/api/players
+Authorization: Bearer {{token}}
+
+###
+
+### Search players by name
+GET {{baseUrl}}/api/players?search=john
+Authorization: Bearer {{token}}
+
+###
+
+### Get players by team
+GET {{baseUrl}}/api/players?team_id=1
+Authorization: Bearer {{token}}
+
+###
+
+### Get single player
+GET {{baseUrl}}/api/players/1
+Authorization: Bearer {{token}}
+
+###
+
+### Update player stats (Admin, captain, or player themselves)
+PUT {{baseUrl}}/api/players/1
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "role": "batsman",
+  "runs": 450,
+  "wickets": 5,
+  "matches_played": 12,
+  "batting_avg": 37.5,
+  "strike_rate": 128.5
+}
+
+
+###############################################################################
+# 10. REST – LEADERBOARD (JWT Protected)
+###############################################################################
+
+### Get full leaderboard (top batsmen + bowlers + points table)
+GET {{baseUrl}}/api/leaderboard
+Authorization: Bearer {{token}}

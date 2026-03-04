@@ -10,44 +10,87 @@
 'use strict'
 
 const http = require('http')
+const express = require('express')
 const app = require('./app')
 const env = require('./config/env')
 const db = require('./db/pool')
+const { ApolloServer } = require('@apollo/server')
+const { expressMiddleware } = require('@apollo/server/express4')
+const { initWebSocket } = require('./ws/wsServer')
+const { optionalAuth } = require('./middleware/auth')
+const typeDefs = require('./graphql/typeDefs')
+const resolvers = require('./graphql/resolvers')
 
 const server = http.createServer(app)
 
-// Catch listen errors (e.g. port already in use) with a clear message
-server.on('error', (err) => {
-    if (err.code === 'EADDRINUSE') {
-        console.error(`\n ❌  Port ${env.PORT} is already in use.`)
-        console.error(`     Kill the existing process first:`)
-        console.error(`     Get-NetTCPConnection -LocalPort ${env.PORT} -State Listen | ForEach-Object { Stop-Process -Id $_.OwningProcess -Force }\n`)
-    } else {
-        console.error(' ❌  Server error:', err.message)
-    }
-    process.exit(1)
-})
-
-// ─── Start listening ──────────────────────────────────────────────────────────
-server.listen(env.PORT, async () => {
-    console.log('─────────────────────────────────────────────')
-    console.log(` 🏏  Smart League Manager – API Server`)
-    console.log(`     Environment : ${env.NODE_ENV}`)
-    console.log(`     Listening   : http://localhost:${env.PORT}`)
-    console.log(`     Health      : http://localhost:${env.PORT}/api/health`)
-    console.log('─────────────────────────────────────────────')
-
-    // Verify DB connection on startup
+/**
+ * startServer
+ * Initializes Apollo, WebSockets, and starts the HTTP server.
+ */
+const startServer = async () => {
     try {
-        const { rows } = await db.query('SELECT NOW() AS now')
-        console.log(` ✅  PostgreSQL connected  (${rows[0].now})`)
-    } catch (err) {
-        console.error(` ❌  PostgreSQL connection FAILED: ${err.message}`)
-        console.error('     Check DB_* values in your .env file.')
-    }
+        // 1. Initialize Apollo Server
+        const apollo = new ApolloServer({
+            typeDefs,
+            resolvers,
+        })
+        await apollo.start()
 
-    console.log('─────────────────────────────────────────────')
-})
+        // 2. Mount GraphQL at /graphql
+        // Apollo Server v4's expressMiddleware requires express.json() on the route
+        app.use('/graphql', express.json(), optionalAuth, expressMiddleware(apollo, {
+            context: async ({ req }) => ({
+                db,
+                user: req.user,
+            }),
+        }))
+
+        // 3. 404 catch-all (must be registered AFTER Apollo, so /graphql isn't intercepted)
+        app.use((req, res) => {
+            res.status(404).json({ status: 'error', message: `Route not found: ${req.method} ${req.path}` })
+        })
+
+        // 3. Initialize WebSocket server
+        initWebSocket(server)
+
+        // 4. Catch listen errors (e.g. port already in use)
+        server.on('error', (err) => {
+            if (err.code === 'EADDRINUSE') {
+                console.error(`\n ❌  Port ${env.PORT} is already in use.`)
+                console.error(`     Kill the existing process first:`)
+                console.error(`     Get-NetTCPConnection -LocalPort ${env.PORT} -State Listen | ForEach-Object { Stop-Process -Id $_.OwningProcess -Force }\n`)
+            } else {
+                console.error(' ❌  Server error:', err.message)
+            }
+            process.exit(1)
+        })
+
+        // 5. Start listening
+        server.listen(env.PORT, async () => {
+            console.log('─────────────────────────────────────────────')
+            console.log(` 🏏  Smart League Manager – API Server`)
+            console.log(`     Environment : ${env.NODE_ENV}`)
+            console.log(`     REST API    : http://localhost:${env.PORT}/api`)
+            console.log(`     GraphQL     : http://localhost:${env.PORT}/graphql`)
+            console.log(`     WebSocket   : ws://localhost:${env.PORT}/ws`)
+            console.log('─────────────────────────────────────────────')
+
+            // Verify DB connection on startup
+            try {
+                const { rows } = await db.query('SELECT NOW() AS now')
+                console.log(` ✅  PostgreSQL connected  (${rows[0].now})`)
+            } catch (err) {
+                console.error(` ❌  PostgreSQL connection FAILED: ${err.message}`)
+            }
+            console.log('─────────────────────────────────────────────')
+        })
+    } catch (err) {
+        console.error(' ❌  Failed to start server:', err.message)
+        process.exit(1)
+    }
+}
+
+startServer()
 
 // ─── Graceful shutdown ────────────────────────────────────────────────────────
 const shutdown = async (signal) => {
@@ -58,7 +101,7 @@ const shutdown = async (signal) => {
         process.exit(0)
     })
 
-    // Force-exit if graceful shutdown hangs
+    // Force-exit after timeout
     setTimeout(() => {
         console.error('[SERVER] Forced exit after 10 s timeout.')
         process.exit(1)
@@ -68,9 +111,8 @@ const shutdown = async (signal) => {
 process.on('SIGTERM', () => shutdown('SIGTERM'))
 process.on('SIGINT', () => shutdown('SIGINT'))
 
-// Catch unhandled rejections so the process doesn't silently die
 process.on('unhandledRejection', (reason) => {
     console.error('[UNHANDLED REJECTION]', reason)
 })
 
-module.exports = server // exported for tests
+module.exports = server

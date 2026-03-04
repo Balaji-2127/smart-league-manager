@@ -4,7 +4,7 @@ import { gsap } from 'gsap'
 import { useAuth } from '../context/AuthContext'
 import {
     FiHome, FiAward, FiCalendar, FiZap, FiBarChart2,
-    FiUsers, FiUser, FiSettings, FiLogOut, FiMenu, FiX
+    FiUsers, FiUser, FiSettings, FiLogOut, FiMenu, FiX, FiShield
 } from 'react-icons/fi'
 import { GiCricketBat } from 'react-icons/gi'
 import './Navbar.css'
@@ -18,6 +18,7 @@ const navLinks = [
     { to: '/matches', icon: <FiCalendar />, label: 'Matches', roles: null },
     { to: '/leaderboard', icon: <FiBarChart2 />, label: 'Leaderboard', roles: null },
     { to: '/teams', icon: <FiUsers />, label: 'My Team', roles: ['admin', 'captain'] },
+    { to: '/admin', icon: <FiShield />, label: 'Admin Panel', roles: ['admin'] },
     { to: '/settings', icon: <FiSettings />, label: 'Settings', roles: null },
 ]
 

@@ -11,6 +11,7 @@ import Leaderboard from './pages/Leaderboard'
 import TeamManagement from './pages/TeamManagement'
 import PlayerProfile from './pages/PlayerProfile'
 import Settings from './pages/Settings'
+import AdminPanel from './pages/AdminPanel'
 
 function App() {
   const { isAuthenticated, loading } = useAuth()
@@ -38,6 +39,7 @@ function App() {
           <Route path="/teams" element={<ProtectedRoute allowedRoles={['admin', 'captain']}><TeamManagement /></ProtectedRoute>} />
           <Route path="/profile/:id" element={<ProtectedRoute><PlayerProfile /></ProtectedRoute>} />
           <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
+          <Route path="/admin" element={<ProtectedRoute allowedRoles={['admin']}><AdminPanel /></ProtectedRoute>} />
 
           {/* Fallback */}
           <Route path="*" element={<Navigate to={isAuthenticated ? '/dashboard' : '/login'} replace />} />
