@@ -28,6 +28,8 @@ module.exports = {
         user: process.env.DB_USER,
         password: process.env.DB_PASSWORD,
         database: process.env.DB_NAME,
+        // SSL required for Supabase
+        ssl: { rejectUnauthorized: false },
         // Connection pool tuning
         max: 10,   // max pool size
         idleTimeoutMillis: 30000,

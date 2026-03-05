@@ -52,3 +52,8 @@ export const playerService = {
 export const leaderboardService = {
     get: () => api.get('/leaderboard'),
 }
+
+// ─── STATISTICS ───────────────────────────────────────────────────────────────
+export const statsService = {
+    get: () => api.get('/stats'),
+}

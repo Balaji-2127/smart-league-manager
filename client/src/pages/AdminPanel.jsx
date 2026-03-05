@@ -16,7 +16,7 @@ import MatchesPage from './admin/MatchesPage'
 import LeaderboardPage from './admin/LeaderboardPage'
 
 // API
-import { teamService, tournamentService, matchService, playerService } from '../api/services'
+import { statsService, matchService } from '../api/services'
 
 // ─── Tabs ─────────────────────────────────────────────────────────────────────
 const TABS = [
@@ -57,21 +57,13 @@ export default function AdminPanel() {
     const loadStats = async () => {
         setStatsLoading(true)
         try {
-            const [teamRes, tourneyRes, matchRes, playerRes] = await Promise.all([
-                teamService.getAll(),
-                tournamentService.getAll(),
+            const [statsRes, matchRes] = await Promise.all([
+                statsService.get(),
                 matchService.getAll({ limit: 5 }),
-                playerService.getAll(),
             ])
-            const matches = matchRes.data.data || []
-            setStats({
-                tournaments: tourneyRes.data.data?.length ?? 0,
-                teams: teamRes.data.data?.length ?? 0,
-                matches: matchRes.data.pagination?.total ?? matches.length,
-                players: playerRes.data.data?.length ?? 0,
-                liveMatches: matches.filter(m => m.status === 'live').length,
-            })
-            setRecentMatches(matches.slice(0, 5))
+            const matches = matchRes.data.matches || []
+            setStats(statsRes.data.data)
+            setRecentMatches(matches)
         } catch (err) {
             toast.error('Failed to load overview stats')
         } finally {

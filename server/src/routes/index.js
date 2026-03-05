@@ -29,6 +29,41 @@ router.get('/health', async (req, res) => {
     }
 })
 
+// ─── Statistics route ────────────────────────────────────────────────────────
+/**
+ * GET /api/stats
+ * Returns aggregate counts for the dashboard.
+ */
+router.get('/stats', async (req, res) => {
+    try {
+        const [tournaments, teams, matches, players] = await Promise.all([
+            db.query('SELECT COUNT(*)::int FROM tournaments'),
+            db.query('SELECT COUNT(*)::int FROM teams'),
+            db.query('SELECT COUNT(*)::int FROM matches'),
+            db.query('SELECT COUNT(*)::int FROM players')
+        ])
+
+        const [liveMatches, upcomingMatches] = await Promise.all([
+            db.query("SELECT COUNT(*)::int FROM matches WHERE status = 'live'"),
+            db.query("SELECT COUNT(*)::int FROM matches WHERE status = 'upcoming'")
+        ])
+
+        res.json({
+            status: 'success',
+            data: {
+                tournaments: tournaments.rows[0].count,
+                teams: teams.rows[0].count,
+                matches: matches.rows[0].count,
+                players: players.rows[0].count,
+                liveMatches: liveMatches.rows[0].count,
+                upcoming: upcomingMatches.rows[0].count
+            }
+        })
+    } catch (err) {
+        res.status(500).json({ status: 'error', message: 'Failed to fetch statistics', detail: err.message })
+    }
+})
+
 // ─── Route modules ────────────────────────────────────────────────────────────
 const authRoutes = require('./auth')
 const teamRoutes = require('./teams')

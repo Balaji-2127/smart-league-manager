@@ -72,6 +72,19 @@ export default function TeamManagement() {
         gsap.fromTo(headerRef.current, { y: -20, opacity: 0 }, { y: 0, opacity: 1, duration: 0.5 })
     }, [])
 
+    useEffect(() => {
+        if (!loading && team) {
+            gsap.fromTo('.card',
+                { y: 30, opacity: 0, scale: 0.98 },
+                { y: 0, opacity: 1, scale: 1, stagger: 0.1, duration: 0.6, ease: 'power3.out' }
+            )
+            gsap.fromTo('tbody tr',
+                { opacity: 0, x: -10 },
+                { opacity: 1, x: 0, stagger: 0.05, duration: 0.4, ease: 'power2.out', delay: 0.3 }
+            )
+        }
+    }, [loading, team])
+
     const team = data?.teams?.find(t => t.captain?.id === user?.id) || data?.teams?.[0]
     const players = team?.players || []
 
@@ -233,12 +246,19 @@ export default function TeamManagement() {
                     </div>
                 </div>
             ) : (
-                <div className="card" style={{ textAlign: 'center', padding: '3rem' }}>
-                    <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🏏</div>
-                    <h3>No Team Yet</h3>
-                    <p className="text-muted mt-1">
-                        {user?.role === 'captain' || user?.role === 'admin' ? "You haven't created a team. Click 'Create Team' to get started!" : 'No teams found on this platform yet.'}
+                <div className="card hero-gradient" style={{ textAlign: 'center', padding: '4rem 2rem', border: 'none' }}>
+                    <div style={{ fontSize: '4rem', marginBottom: '1.5rem', filter: 'drop-shadow(0 0 10px rgba(255,184,0,0.4))' }}>🏏</div>
+                    <h2 className="text-white">Start Your Legacy</h2>
+                    <p className="text-white mt-1" style={{ opacity: 0.8, maxWidth: '400px', margin: '1rem auto' }}>
+                        {user?.role === 'captain' || user?.role === 'admin'
+                            ? "You haven't registered a team yet. Lead your squad to glory by creating your franchise today!"
+                            : 'The league is currently empty. Check back later for team registrations.'}
                     </p>
+                    {(user?.role === 'captain' || user?.role === 'admin') && (
+                        <button className="btn btn-primary mt-2" onClick={() => setShowCreate(true)} style={{ padding: '0.75rem 2rem' }}>
+                            <FiPlus /> Register New Team
+                        </button>
+                    )}
                 </div>
             )}
 

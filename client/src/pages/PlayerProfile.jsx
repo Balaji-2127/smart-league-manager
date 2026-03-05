@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { gsap } from 'gsap'
 import { useAuth } from '../context/AuthContext'
-import api from '../api/axios'
+import { playerService } from '../api/services'
 import toast from 'react-hot-toast'
 import { FiUpload, FiEdit2, FiSave } from 'react-icons/fi'
 import { GiCricketBat } from 'react-icons/gi'
@@ -23,35 +23,39 @@ export default function PlayerProfile() {
     const canEdit = isOwn || user?.role === 'admin'
 
     useEffect(() => {
-        api.get(`/players/${id}`)
-            .then(res => {
-                const p = res.data.player || DUMMY_PLAYER
-                setPlayer(p)
-                setForm({ name: p.name, email: p.email })
-            })
-            .catch(() => {
-                setPlayer(DUMMY_PLAYER)
-                setForm({ name: DUMMY_PLAYER.name, email: DUMMY_PLAYER.email })
-            })
-            .finally(() => setLoading(false))
+        const fetchPlayer = async () => {
+            try {
+                const res = await playerService.getById(id)
+                const p = res.data.data
+                if (p) {
+                    setPlayer(p)
+                    setForm({ name: p.name, email: p.email })
+                }
+            } catch (err) {
+                console.error('Player fetch error:', err)
+                toast.error('Could not load profile')
+            } finally {
+                setLoading(false)
+            }
+        }
+        fetchPlayer()
     }, [id])
 
     useEffect(() => {
         if (loading) return
         const tl = gsap.timeline()
         tl.fromTo(profileRef.current, { y: -20, opacity: 0 }, { y: 0, opacity: 1, duration: 0.5 })
-        tl.fromTo([...statsRef.current.children],
-            { y: 30, opacity: 0, scale: 0.9 },
-            { y: 0, opacity: 1, scale: 1, stagger: 0.1, ease: 'back.out(1.4)', duration: 0.4 }, '-=0.2'
-        )
+        if (statsRef.current) {
+            tl.fromTo([...statsRef.current.children],
+                { y: 30, opacity: 0, scale: 0.9 },
+                { y: 0, opacity: 1, scale: 1, stagger: 0.1, ease: 'back.out(1.4)', duration: 0.4 }, '-=0.2'
+            )
+        }
     }, [loading])
 
     const handleSave = async () => {
         try {
-            const fd = new FormData()
-            fd.append('name', form.name)
-            if (photo) fd.append('photo', photo)
-            await api.put(`/players/${id}`, fd, { headers: { 'Content-Type': 'multipart/form-data' } })
+            await playerService.update(id, form)
             setPlayer(p => ({ ...p, ...form }))
             toast.success('Profile updated!')
             setEditing(false)
