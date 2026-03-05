@@ -33,7 +33,7 @@ module.exports = {
         // Connection pool tuning
         max: 10,   // max pool size
         idleTimeoutMillis: 30000,
-        connectionTimeoutMillis: 2000,
+        connectionTimeoutMillis: 10000,
     },
 
     // JWT (wired up later when auth is added)

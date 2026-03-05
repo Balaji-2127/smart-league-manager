@@ -7,7 +7,7 @@
 
 ### ─── Save your token after login ────────────────────────────────────────────
 ### After running the Login request, copy the token value and paste it below:
-@token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6OSwibmFtZSI6IkFkbWluIFVzZXIiLCJlbWFpbCI6ImFkbWlAc2xtLmNvbSIsInJvbGUiOiJhZG1pbiIsImlhdCI6MTc3MjYxMTYxOCwiZXhwIjoxNzczMjE2NDE4fQ.VRElPOViSuBB82XEk3GOKcOl8IB-OOLCZcVPZU4n0QM
+@token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MywibmFtZSI6IkFkbWluIFVzZXIiLCJlbWFpbCI6ImFkbWlAc2xtLmNvbSIsInJvbGUiOiJhZG1pbiIsImlhdCI6MTc3MjcwNDY4MSwiZXhwIjoxNzczMzA5NDgxfQ.PjMJkX_PDppbIWSc1zYptTBxHpwtYD0kg-aXTeFVSew
 
 
 ###############################################################################
@@ -79,8 +79,8 @@ POST {{baseUrl}}/api/auth/login
 Content-Type: {{contentType}}
 
 {
-  "email": "balajid2206@gmail.com",
-  "password": "Balaji2206@"
+  "email": "admi@slm.com",
+  "password": "password123"
 }
 
 ###
