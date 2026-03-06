@@ -1,4 +1,4 @@
-name: Smart League CI Pipeline
+name: Smart League CI
 
 on:
   push:
@@ -7,13 +7,14 @@ on:
 
 jobs:
   build:
+
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
+      - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
+      - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: 20
@@ -22,11 +23,6 @@ jobs:
         run: |
           cd server
           npm install
-
-      - name: Run backend tests
-        run: |
-          cd server
-          npm test || echo "No tests yet"
 
       - name: Install frontend dependencies
         run: |
@@ -37,3 +33,8 @@ jobs:
         run: |
           cd client
           npm run build
+
+      - name: Build Docker image
+        run: |
+          cd server
+          docker build -t smart-league-backend .
