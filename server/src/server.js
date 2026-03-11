@@ -20,6 +20,11 @@ const { initWebSocket } = require('./ws/wsServer')
 const { optionalAuth } = require('./middleware/auth')
 const typeDefs = require('./graphql/typeDefs')
 const resolvers = require('./graphql/resolvers')
+const client = require('prom-client')
+
+// ─── Prometheus Metrics Setup ─────────────────────────────────────────────────
+client.collectDefaultMetrics()
+const register = client.register
 
 const server = http.createServer(app)
 
@@ -45,7 +50,13 @@ const startServer = async () => {
             }),
         }))
 
-        // 3. 404 catch-all (must be registered AFTER Apollo, so /graphql isn't intercepted)
+        // 3. Prometheus metrics endpoint
+        app.get('/metrics', async (req, res) => {
+            res.set('Content-Type', register.contentType)
+            res.end(await register.metrics())
+        })
+
+        // 4. 404 catch-all (must be registered AFTER Apollo, so /graphql isn't intercepted)
         app.use((req, res) => {
             res.status(404).json({ status: 'error', message: `Route not found: ${req.method} ${req.path}` })
         })
@@ -73,6 +84,7 @@ const startServer = async () => {
             console.log(`     REST API    : http://localhost:${env.PORT}/api`)
             console.log(`     GraphQL     : http://localhost:${env.PORT}/graphql`)
             console.log(`     WebSocket   : ws://localhost:${env.PORT}/ws`)
+            console.log(`     Metrics     : http://localhost:${env.PORT}/metrics`)
             console.log('─────────────────────────────────────────────')
 
             // Verify DB connection on startup
