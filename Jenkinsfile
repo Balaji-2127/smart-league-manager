@@ -4,9 +4,19 @@ agent any
 
 stages {
 
-    stage('Install Backend Dependencies') {
+    stage('Install Client Dependencies') {
         steps {
-            bat 'npm install'
+            dir('client') {
+                bat 'npm install'
+            }
+        }
+    }
+
+    stage('Install Server Dependencies') {
+        steps {
+            dir('server') {
+                bat 'npm install'
+            }
         }
     }
 
