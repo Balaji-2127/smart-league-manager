@@ -1,3 +1,16 @@
+# Smart League Manager – Client
+
+A modern cricket league management platform built with **React + Vite**.  
+Manage tournaments, teams, players, live scores, and leaderboards in real time.
+
+## Features
+- 🏏 Live score updates via WebSocket
+- 📊 Leaderboard & player stats
+- 🔐 Role-based access (Admin / Captain / Player / Viewer)
+- ⚡ GraphQL + REST API integration
+
+---
+
 # React + Vite
 
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
