@@ -22,7 +22,19 @@ stages {
 
     stage('Build Docker Image') {
         steps {
-            bat 'docker build -t smart-league-manager .'
+            bat 'docker build -t smart-league-backend .'
+        }
+    }
+
+    stage('Tag Docker Image') {
+        steps {
+            bat 'docker tag smart-league-backend balajid2206/smart-league-backend'
+        }
+    }
+
+    stage('Push Docker Image') {
+        steps {
+            bat 'docker push balajid2206/smart-league-backend'
         }
     }
 
