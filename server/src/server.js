@@ -23,6 +23,7 @@ const resolvers = require('./graphql/resolvers')
 const client = require('prom-client')
 
 // ─── Prometheus Metrics Setup ─────────────────────────────────────────────────
+// Collects default Node.js metrics (CPU, memory, event loop, etc.)
 client.collectDefaultMetrics()
 const register = client.register
 
