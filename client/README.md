@@ -9,6 +9,14 @@ Manage tournaments, teams, players, live scores, and leaderboards in real time.
 - 🔐 Role-based access (Admin / Captain / Player / Viewer)
 - ⚡ GraphQL + REST API integration
 
+## CI/CD – Jenkins Pipeline
+- 🔗 **GitHub Webhook** configured to trigger Jenkins on every `git push`
+- 🛠️ Jenkins pipeline stages:
+  1. **Clone Repository** – pulls latest code from GitHub
+  2. **Install Backend Dependencies** – runs `npm install` in `/server`
+  3. **Build Docker Image** – builds `smart-league-backend` Docker image
+- Webhook URL: `http://<jenkins-host>:8080/github-webhook/`
+
 ---
 
 # React + Vite
