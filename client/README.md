@@ -3,6 +3,8 @@
 A modern cricket league management platform built with **React + Vite**.  
 Manage tournaments, teams, players, live scores, and leaderboards in real time.
 
+> Last Updated: March 2026
+
 ## Features
 - 🏏 Live score updates via WebSocket
 - 📊 Leaderboard & player stats
